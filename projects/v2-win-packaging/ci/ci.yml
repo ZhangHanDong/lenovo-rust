@@ -1,0 +1,66 @@
+# 第 11 课 CI 片段（演示用）：用 GitHub Actions 的 Windows runner 做"真实"构建 / 测试 / MSI 打包。
+#
+# 两点对照讲义：
+# 1) 交叉编译矩阵：在 macOS/Linux runner 上用 cargo-xwin 编 MSVC 目标（无需 Windows 机器）；
+#    在 Windows runner 上则原生构建 + 打 MSI（cargo-wix 依赖系统 WiX Toolset，只有 Windows 有）。
+# 2) MSI 产物用 actions/upload-artifact 收集，供客户下载验证（对照"客户在 Windows 验证"流程）。
+#
+# 放在仓库根的 .github/workflows/ 下即可启用；此处仅作课程节选，不随 crate 自动运行。
+
+name: v2-win-packaging
+
+on:
+  push:
+    branches: [v2-windows-crossplatform]
+  workflow_dispatch:
+
+jobs:
+  # ── A. 在 Linux 上交叉编译 MSVC 目标（cargo-xwin，无需 Windows 机器）──
+  cross-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64-pc-windows-msvc, aarch64-pc-windows-msvc]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: 安装 cargo-xwin 与 LLVM（提供 lld-link）
+        run: |
+          sudo apt-get update && sudo apt-get install -y clang llvm lld
+          cargo install cargo-xwin --locked
+      - name: 交叉编译（cargo-xwin 自动下载并缓存 MSVC 头/库）
+        run: cargo xwin build --release -p v2-win-packaging --target ${{ matrix.target }}
+
+  # ── B. 在 Windows 上原生构建 + 测试 + 打 MSI + 签名 ──
+  windows-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: 构建与测试（原生 MSVC 工具链）
+        run: |
+          cargo build --release -p v2-win-packaging
+          cargo test  --release -p v2-win-packaging
+      # cargo-wix 依赖 WiX 3 的 candle/light（不兼容 WiX 4/5 的 `wix build`）。
+      # windows-latest 自 2025-09 迁移到 Windows Server 2025 镜像后不再预装 WiX 3，
+      # 因此显式安装并写入 PATH——不依赖托管镜像的隐式预装（自托管 runner 同理）。
+      - name: 安装 WiX Toolset 3
+        run: |
+          choco install wixtoolset -y --no-progress
+          echo "C:\Program Files (x86)\WiX Toolset v3.14\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: 安装 cargo-wix
+        run: cargo install cargo-wix --locked
+      - name: 打 MSI 安装包
+        run: cargo wix -p v2-win-packaging --nocapture
+      # 可选：用 signtool 对 MSI 签名（需在仓库 Secrets 配置证书）。
+      # - name: 代码签名
+      #   run: |
+      #     signtool sign /fd SHA256 /f cert.pfx /p ${{ secrets.CERT_PWD }} ^
+      #       /tr http://timestamp.digicert.com /td SHA256 target\wix\*.msi
+      - name: 上传 MSI 产物（供客户下载验证）
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-greeter-msi
+          path: target/wix/*.msi

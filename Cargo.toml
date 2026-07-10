@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+# 第 8 课的 Flutter（flutter_rust_bridge）工程是独立 Flutter 应用，不纳入本 workspace
+# （与 android-demo 同理），避免其 Rust crate 干扰 `cargo build --workspace`。
+exclude = ["frb_demo"]
+members = [
+    "projects/v2-idiomatic",
+    "projects/v2-type-modeling",
+    "projects/v2-ownership-errors",
+    "projects/v2-concurrency",
+    "projects/v2-async",
+    "projects/v2-perf-bench",
+    "projects/v2-safe-abstraction",
+    "projects/v2-ffi-cpp",
+    "projects/v2-cross-lang",
+    "projects/v2-mobile",
+    "projects/v2-win-api",
+    "projects/v2-win-com",
+    "projects/v2-win-packaging",
+    "projects/v2-win-gui",
+    "projects/v2-cross-core",
+    "projects/v2-debugging",
+    "projects/v2-capstone",
+]
+
+# 统一依赖版本（对照第 1 课 workspace 讲解，对比 Gradle version catalog）。
+# Windows / diplomat / cc 等专项依赖由对应课的 crate 在自身 Cargo.toml 声明
+# （Windows 相关放 [target.'cfg(windows)'.dependencies]，使 macOS 不参与编译）。
+[workspace.package]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["张汉东"]
+rust-version = "1.82"
+
+[workspace.dependencies]
+anyhow = "1"
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1", features = ["full"] }
+clap = { version = "4", features = ["derive"] }
+rayon = "1"
+criterion = "0.5"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

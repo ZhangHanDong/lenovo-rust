@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<!--
+  WiX 源文件模板（演示用，节选）。
+  这是 `cargo wix init` 在 Windows 上生成的 wix/main.wxs 的最小化注释版本，
+  本课不要求真打包；客户在 Windows 上执行 `cargo wix` 时，cargo-wix 会用本文件
+  调用系统 WiX Toolset（candle/light）生成 target/wix/v2-greeter-x.y.z-x86_64.msi。
+
+  关键占位（真实项目需替换）：
+  - UpgradeCode：每个产品一个固定 GUID，跨版本不变，决定"升级"而非"并存安装"。
+  - Product/@Version、Manufacturer：通常由 cargo-wix 从 Cargo.toml 注入（见下方变量）。
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*"
+             Name="v2-greeter"
+             UpgradeCode="PUT-A-FIXED-UPGRADE-GUID-HERE"
+             Manufacturer="$(var.Manufacturer)"
+             Language="1033"
+             Codepage="1252"
+             Version="$(var.Version)">
+
+        <Package Id="*"
+                 Keywords="Installer"
+                 Manufacturer="$(var.Manufacturer)"
+                 InstallerVersion="450"
+                 Languages="1033"
+                 Compressed="yes"
+                 InstallScope="perMachine"
+                 SummaryCodepage="1252" />
+
+        <MajorUpgrade
+            Schedule="afterInstallInitialize"
+            DowngradeErrorMessage="已安装更高版本的 v2-greeter。" />
+
+        <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" DiskPrompt="CD-ROM #1" />
+
+        <!-- 安装目录：Program Files\v2-greeter\bin\v2-greeter.exe -->
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFiles64Folder">
+                <Directory Id="APPLICATIONFOLDER" Name="v2-greeter">
+                    <Directory Id="Bin" Name="bin">
+                        <Component Id="binary0" Guid="*">
+                            <File Id="exe0"
+                                  Name="v2-greeter.exe"
+                                  Source="$(var.CargoTargetBinDir)\v2-greeter.exe"
+                                  KeyPath="yes" />
+                        </Component>
+                    </Directory>
+                </Directory>
+            </Directory>
+        </Directory>
+
+        <Feature Id="Binaries" Title="Application" Level="1">
+            <ComponentRef Id="binary0" />
+        </Feature>
+
+        <!--
+          本课只演示"把可执行文件打进 MSI"。把程序进一步注册成 Windows 服务、写注册表、
+          建快捷方式等"系统集成"用 <ServiceInstall> / <ServiceControl> / <RegistryValue>
+          等元素表达，属于第 12 课（桌面 GUI 与系统集成）的范畴，此处从略。
+        -->
+    </Product>
+</Wix>

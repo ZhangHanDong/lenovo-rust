@@ -1,0 +1,16 @@
+# Rust
+/target
+**/*.rs.bk
+Cargo.lock.bak
+
+# mdbook 输出
+/book
+/book-student
+
+# Android 集成产物（第 14/15 课）
+*.so
+*.aar
+.gradle/
+
+# 系统
+.DS_Store

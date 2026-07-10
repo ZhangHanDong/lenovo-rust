@@ -1,0 +1,11 @@
+[package]
+name = "v2-concurrency"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "第 3 课：并发与内存模型——std 线程池/调度器 + scoped 并行聚合（赏析 rayon/crossbeam）"
+
+[dependencies]
+# 核心线程池仅用标准库；rayon 仅用于一个“数据并行”赏析示例，对照 std::thread::scope 版本。
+rayon.workspace = true

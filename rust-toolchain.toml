@@ -1,0 +1,5 @@
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]
+# 移动端（第 8 课·次要）的 Android 目标可按需追加：
+# targets = ["aarch64-linux-android", "x86_64-linux-android"]

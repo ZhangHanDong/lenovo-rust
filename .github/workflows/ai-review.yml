@@ -1,0 +1,47 @@
+name: AI 作业评审
+
+# 学员作业 PR 打开或更新时，用 Claude 按 RUBRIC.md 的 D1–D7 维度自动评审。
+# 前置条件：仓库 Settings → Secrets 配置 ANTHROPIC_API_KEY。
+# 只对标题形如 "[hwNN] ..." 的 PR 触发，避免消耗在普通 PR 上。
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    if: startsWith(github.event.pull_request.title, '[hw')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Claude 评审
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            你是本 Rust 培训课程的作业评审助教。请评审当前 PR（一份学员作业）：
+
+            1. 从 PR 标题解析课次（格式 [hwNN]），读 homework/chNN.md 了解本课作业任务与验收标准，读 RUBRIC.md 了解 D1–D7 评分维度定义（homework/chNN.md 末尾标明本课侧重哪些维度）。
+            2. 用 `git diff origin/main...HEAD` 查看学员改动，逐文件审读。
+            3. 评审重点（按顺序）：
+               - 是否完成了作业要求的全部任务点（对照 homework/chNN.md 逐条核对）；
+               - 正确性：有无 bug、未处理的边界、误用 unsafe、错误处理偷懒（unwrap 滥用）；
+               - 是否新增了作业要求的测试（含 compile_fail 文档测试，如该课要求）；
+               - 代码是否地道（惯用法、命名、所有权处理、无多余 clone）；
+               - PR 描述是否回答了作业要求的设计问题。
+            4. 输出一条 PR 评论，结构如下：
+               - **总评**（两三句，先说结论）；
+               - **任务完成度清单**（作业每个任务点 ✅/❌/部分）；
+               - **D1–D7 评分表**（只给本课侧重的维度打分，1–5 分制，每个分数一句理由）；
+               - **必须修改**（阻塞项，若无则写"无"）；
+               - **建议改进**（非阻塞，最多 3 条）。
+            评语用简体中文，直接、具体、引用代码行号。分数供讲师参考，不要写"最终成绩"字样。
+          claude_args: |
+            --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(cargo test:*),Bash(cargo clippy:*),Read,Grep,Glob"

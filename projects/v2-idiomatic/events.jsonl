@@ -1,0 +1,5 @@
+{"user":1,"kind":"login","ts":1700000000000}
+{"user":1,"kind":"purchase","ts":1700000060000,"amount_cents":1500}
+{"user":2,"kind":"purchase","ts":1700000120000,"amount_cents":900}
+{"user":2,"kind":"error","ts":1700000150000}
+{"user":1,"kind":"logout","ts":1700000180000}
