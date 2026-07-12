@@ -5,7 +5,6 @@ Cargo.lock.bak
 
 # mdbook 输出
 /book
-/book-student
 
 # Android 集成产物（第 14/15 课）
 *.so

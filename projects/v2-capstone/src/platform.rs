@@ -131,12 +131,11 @@ mod tests {
     fn default_probe_collects_on_this_host() {
         // 在交付机（macOS）上，默认探针必须能产出一份有效报告。
         let report = collect_report(&default_probe()).expect("default probe works on host");
-        // 有信息量的断言：真实探针采到的主机名与 OS 家族短名必须原样出现在 canonical 串里，
-        // 且报告指纹等于对该串直接取 FNV-1a——验证的是 to_canonical / fingerprint 在真实数据上
-        // 的一致性，而非 CpuCount≥1 / Hostname 非空那种由构造式白送的重言式。
+        // 有信息量的断言：真实探针采到的主机名与 OS 家族短名必须原样出现在 canonical 串里
+        // ——验证 to_canonical 在真实数据上没丢字段/错映射（指纹与 FNV 常量的一致性
+        // 由同文件 fingerprint_matches_ffi_helper 用独立硬编码常量另行守护）。
         let canonical = report.to_canonical();
         assert!(canonical.contains(report.hostname.as_str()));
         assert!(canonical.contains(report.os_family.as_str()));
-        assert_eq!(report.fingerprint(), crate::fingerprint(&canonical));
     }
 }

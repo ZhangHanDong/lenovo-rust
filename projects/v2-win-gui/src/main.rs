@@ -19,6 +19,8 @@ fn main() {
         if std::env::args().any(|arg| arg == "--service") {
             if let Err(e) = v2_win_gui::service::run_as_service() {
                 eprintln!("服务分发失败（未由 SCM 以服务方式拉起？）：{e}");
+                // 分发失败是真实失败：退出码必须非零，SCM/运维工具才能据此触发恢复动作
+                std::process::exit(1);
             }
             return;
         }
