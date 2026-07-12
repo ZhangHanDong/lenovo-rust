@@ -49,6 +49,11 @@ async fn main() -> anyhow::Result<()> {
 
     run_server(listener, Arc::clone(&counter), sd_rx).await?;
 
-    tracing::info!("已退出，累计处理 {} 行", counter.load(Ordering::SeqCst));
+    // 读侧与写侧（handle_conn 里的 fetch_add）统一用 Relaxed：仅做无同步的计数聚合，
+    // 不借它在线程间建立 happens-before（见第 3 课）。
+    tracing::info!(
+        "截至退出时已处理 {} 行（仍可能有在途连接未计入）",
+        counter.load(Ordering::Relaxed)
+    );
     Ok(())
 }

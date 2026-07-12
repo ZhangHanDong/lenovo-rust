@@ -8,6 +8,22 @@
 use v2_win_gui::{AppConfig, ServiceCommand, ServiceState, TrayMenu};
 
 fn main() {
+    // Windows 服务分发：当 SCM 以 `binPath= "...appctl.exe --service"` 拉起本进程时，
+    // 进程必须在 30 秒内调用 StartServiceCtrlDispatcher（即 service::run_as_service，
+    // 内部走 service_dispatcher::start），把主线程交给 SCM、由它回调 service_main；
+    // 否则 SCM 判定服务无响应（错误 1053）。因此 main 先按命令行参数分发：带 `--service`
+    // 就进服务派发路径、在其结束后返回，否则照常走下面的平台无关 CLI 演示。
+    // 整段仅在 Windows 目标编译（`service` 模块本身也受 #[cfg(windows)] 约束）。
+    #[cfg(windows)]
+    {
+        if std::env::args().any(|arg| arg == "--service") {
+            if let Err(e) = v2_win_gui::service::run_as_service() {
+                eprintln!("服务分发失败（未由 SCM 以服务方式拉起？）：{e}");
+            }
+            return;
+        }
+    }
+
     let cfg = AppConfig::new("LenovoAgent");
     println!("应用配置：{cfg:?}");
     match cfg.validate() {
