@@ -1,0 +1,4 @@
+[package]
+name = "winmon-l3-borrow"
+version = "0.1.0"
+edition = "2021"

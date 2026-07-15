@@ -5,4 +5,7 @@ resolver = "2"
 members = [
     "stages/L1-memory",
     "stages/L2-ownership",
+    "stages/L3-borrow",
+    "stages/L4-model",
+    "stages/L5-report",
 ]

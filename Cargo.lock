@@ -9,3 +9,15 @@ version = "0.1.0"
 [[package]]
 name = "winmon-l2-ownership"
 version = "0.1.0"
+
+[[package]]
+name = "winmon-l3-borrow"
+version = "0.1.0"
+
+[[package]]
+name = "winmon-l4-model"
+version = "0.1.0"
+
+[[package]]
+name = "winmon-l5-report"
+version = "0.1.0"
