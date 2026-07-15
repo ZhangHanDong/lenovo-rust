@@ -1,0 +1,8 @@
+[package]
+name = "winmon-l1-memory"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "layout_report"
+path = "src/main.rs"

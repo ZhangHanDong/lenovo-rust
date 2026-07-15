@@ -1,41 +1,44 @@
-# lenovo-rust · Rust 工程化实战培训 · 配套代码与作业仓库
+# lenovo-rust · Rust 工程化实战培训（V3）· 学员作业仓库
 
-> 作者：张汉东 ｜ 配套代码以 `MIT OR Apache-2.0` 授权用于教学。
+> 作者：张汉东 ｜ 内部培训资料，严禁外传。配套代码以 `MIT OR Apache-2.0` 授权用于教学。
 
-本仓库是培训课程的**配套工程 + 学员作业仓库**：
+本仓库是课程的**学员作业仓库**。全程围绕一个贯穿项目 **WinMon**（一个跨平台进程/事件监控器）展开，每课一道作业，以 PR 形式提交、按 D1–D8 维度评审。
 
-- `projects/` — 15 课配套 crate（`v2-*` 系列，Cargo workspace）
-- `frb_demo/` — 第 8 课 Flutter × Rust（flutter_rust_bridge）独立工程
-- `homework/` — 15 课作业说明与验收方式
-- `RUBRIC.md` — D1–D7 评分维度（作业与结业考核共用）
+## 仓库结构
+
+- `stages/LNN-*/` — 每课的代码骨架。`src/lib.rs` 里 `todo!()` 处就是**你要补全的地方**（参考实现在讲师仓库，不随作业下发）。
+- `homework/chNN.md` — 每课的作业说明与验收标准；`homework/README.md` 是作业总纲。
+- `RUBRIC.md` — 评分维度 **D1–D8**（D8「AI 协作判断力」是本课程与其他 Rust 课最大的不同）。
 
 ## 快速开始
 
 ```bash
-cargo build --workspace
-cargo test  --workspace
+cargo build --workspace          # 骨架能编译（todo!() 可通过）
+cargo test  -p winmon-l1-memory  # 跑某一课的验收测试（补全前是红的，这就是作业）
 
-# 质量门禁（提交作业 PR 的硬性要求）
+# 质量门禁（提交作业 PR 的硬性要求，补全后应全绿）
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
+> `main` 分支是**起点骨架**：`cargo test` 在补全前必然失败——那正是你要完成的作业，不是仓库坏了。
+
 ## 作业提交流程（学员必读）
 
 1. **建分支**：从 `main` 切出 `hw/<你的GitHub ID>/ch<课次>`，例如 `hw/alice/ch01`；
-2. **做作业**：按 `homework/ch<课次>.md` 的任务说明修改对应 crate（如第 1 课改 `projects/v2-type-modeling`）；
-3. **本地过门禁**：跑通上面四条命令（fmt / clippy / test）；
-4. **开 PR**：目标分支 `main`，标题格式 **`[hw01] 你的姓名或ID`**（课次两位数字）。PR 描述必须包含作业要求回答的设计问题（见对应 `homework/chNN.md`）；
-5. **自动评估**：CI 自动跑质量门禁（Linux + Windows 双平台）；AI 评审自动按 `RUBRIC.md` 的 D1–D7 维度打分并在 PR 里留评语；
-6. **修订**：根据 CI 结果与 AI 评语继续 push 到同一分支，评估会自动重跑；
-7. **收尾**：作业 PR **不合并**——讲师确认后加 `evaluated` 标签关闭。`main` 分支始终保持课程原始代码，下一课作业重新从 `main` 切分支。
+2. **做作业**：按 `homework/ch<课次>.md` 补全对应 `stages/LNN-*/` 里的 `todo!()`；
+3. **本地过门禁**：`cargo test` 全绿 + `cargo fmt --all --check` + `cargo clippy --workspace --all-targets -- -D warnings`；
+4. **开 PR**：目标分支 `main`，标题格式 **`[hw01] 你的姓名或ID`**（课次两位数字）。**PR 描述必须回答 D8 三问**：
+   - AI 帮了什么？
+   - 你否决了 AI 的哪些建议？为什么？
+   - AI 犯了什么错？你怎么发现的？（编译器 / miri / criterion / 你自己）
+5. **自动评估**：CI 跑质量门禁（Linux + Windows）；AI 评审按 `RUBRIC.md` 的 D1–D8 维度打分并在 PR 里留评语；
+6. **修订**：按 CI 与 AI 评语继续 push 到同一分支，评估自动重跑。
 
-> 为什么不合并：所有学员改的是同一批 crate，合并任何一份都会让 `main` 偏离课程基线。PR 本身（diff + CI 记录 + AI 评语 + 讨论）就是完整的作业档案。
+## WinMon 演进线
 
-## 评分
+一行文本(L1) → 所有权建模(L2) → 借用式过滤(L3) → 领域建模(L4) → trait 抽象(L5)
+→ 并行采集(L6) → 异步服务(L7) → 容错+性能(L8) → 无分配缓冲(L9) → C 库接入(L10)
+→ 真实系统数据(L11) → 服务+通知(L12) → MSI+CI(L13) → 三平台(L14) → 1.0(L15)
 
-评分维度见 [RUBRIC.md](./RUBRIC.md)。每课作业侧重的维度在对应 `homework/chNN.md` 末尾标明。AI 评审的分数供参考，最终成绩由讲师核定。
-
-## 平台说明
-
-Windows 专属 crate（`v2-win-*`）的代码用 `#[cfg(windows)]` 隔离：macOS/Linux 上 `cargo build --workspace` 可以编过（平台代码被裁剪），运行时行为需在 Windows 上验证——CI 的 Windows job 会替你跑。
+> 本仓库随课堂进度滚动更新：每上一课，讲师通过同步脚本补齐对应 `stages/` 与 `homework/`。
