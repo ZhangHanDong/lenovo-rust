@@ -88,7 +88,69 @@ pub mod fixed {
     ///
     /// （同步到学员仓库时，哨兵之间的函数体会被挖成 `todo!()`，作为作业起点。）
     pub fn layout_report() -> Vec<LayoutRow> {
-        todo!("L1：用 size_of/align_of 生成十个类型（含解释）的布局报告")
+        vec![
+            LayoutRow {
+                name: "u8",
+                size: size_of::<u8>(),
+                align: align_of::<u8>(),
+                note: "一个字节",
+            },
+            LayoutRow {
+                name: "bool",
+                size: size_of::<bool>(),
+                align: align_of::<bool>(),
+                note: "只有 0/1 两个合法位模式",
+            },
+            // ↓↓↓ 下面这些里藏着 3 个错误 ↓↓↓
+            LayoutRow {
+                name: "char",
+                size: size_of::<char>(),
+                align: align_of::<char>(),
+                note: "Unicode 标量值，固定 4 字节",
+            },
+            LayoutRow {
+                name: "&str",
+                size: size_of::<&str>(),
+                align: align_of::<&str>(),
+                note: "胖指针：地址 + 长度",
+            },
+            LayoutRow {
+                name: "String",
+                size: size_of::<String>(),
+                align: align_of::<String>(),
+                note: "ptr + cap + len",
+            },
+            LayoutRow {
+                name: "Vec<u32>",
+                size: size_of::<Vec<u32>>(),
+                align: align_of::<Vec<u32>>(),
+                note: "ptr + len + cap，元素存放在堆上",
+            },
+            LayoutRow {
+                name: "&[u8]",
+                size: size_of::<&[u8]>(),
+                align: align_of::<&[u8]>(),
+                note: "切片胖指针：地址 + 长度",
+            },
+            LayoutRow {
+                name: "Vec<u64>",
+                size: size_of::<Vec<u64>>(),
+                align: align_of::<Vec<u64>>(),
+                note: "容器本身仍是 ptr + len + cap",
+            },
+            LayoutRow {
+                name: "Box<u64>",
+                size: size_of::<Box<u64>>(),
+                align: align_of::<Box<u64>>(),
+                note: "瘦指针，指向堆",
+            },
+            LayoutRow {
+                name: "()",
+                size: size_of::<()>(),
+                align: align_of::<()>(),
+                note: "零大小类型",
+            },
+        ]
     }
 }
 
