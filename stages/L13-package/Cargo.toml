@@ -1,0 +1,7 @@
+[package]
+name = "winmon-l13-package"
+version = "1.0.0"
+edition = "2021"
+
+# CI（.github/workflows）与 WiX（wix/main.wxs）是交付物文件，不参与编译。
+# 本骨架的可测核心是版本 / 产物命名逻辑。

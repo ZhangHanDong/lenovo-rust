@@ -1,0 +1,9 @@
+[package]
+name = "winmon-l14-arch"
+version = "0.1.0"
+edition = "2021"
+
+# 洋葱架构：core 零平台依赖。真实平台采集器：
+# [target.'cfg(windows)'.dependencies] windows = ...   # ToolHelp（L11）
+# [target.'cfg(unix)'.dependencies]    sysinfo = ...    # Linux/macOS
+# 见 platform 模块注释与 SOLUTION.md。

@@ -1,0 +1,9 @@
+[package]
+name = "winmon-l11-win32"
+version = "0.1.0"
+edition = "2021"
+
+# 真实 Win32 调用需要 windows crate（仅 Windows 目标）：
+# [target.'cfg(windows)'.dependencies]
+# windows = { version = "0.58", features = ["Win32_System_SystemInformation", "Win32_Foundation"] }
+# 本骨架的可测核心（格式化 + RAII 守卫）平台无关；GlobalMemoryStatusEx 封装见 SOLUTION.md。
