@@ -31,16 +31,24 @@ pub mod ai_draft {
 
     /// 拿走整个 Vec（调用者之后就没法再用了），还 clone 出每个匹配元素。
     pub fn filter_by_pid(events: Vec<Event>, pid: u32) -> Vec<Event> {
-        events.into_iter().filter(|e| e.pid == pid).collect()
+        let mut out = Vec::new();
+        for e in &events {
+            if e.pid == pid {
+                out.push(e.clone()); // 明明借用着，却整个复制一份
+            }
+        }
+        out
     }
 
     /// 参数是 `String`（强制调用者交出所有权），返回 clone 出的新字符串。
     pub fn messages_containing(events: Vec<Event>, needle: String) -> Vec<String> {
-        events
-            .into_iter()
-            .filter(|e| e.message.contains(&needle))
-            .map(|e| e.message)
-            .collect()
+        let mut out = Vec::new();
+        for e in &events {
+            if e.message.contains(&needle) {
+                out.push(e.message.clone()); // 每条命中都复制堆上的字符串
+            }
+        }
+        out
     }
 
     /// 只是数个数，却把整个 Vec 吃掉了。
