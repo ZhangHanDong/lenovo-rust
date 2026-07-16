@@ -37,7 +37,7 @@ impl EventBuffer {
 
     /// 收一个事件：所有权移进来。
     pub fn push(&mut self, event: Event) {
-        todo!("L2 push：把 event 移入内部 Vec")
+        self.events.push(event);
     }
 
     /// 看有多少个——**只读借用**，不拿走所有权。
@@ -45,7 +45,7 @@ impl EventBuffer {
     /// 审查点：签名必须是 `&self` 不是 `self`。
     /// 如果是 `self`，调用一次 `len()` 就把整个 buffer 吃掉了。
     pub fn len(&self) -> usize {
-        todo!("L2 len：返回事件个数（注意签名是 &self）")
+        self.events.len()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -60,7 +60,7 @@ impl EventBuffer {
     /// ⚠️ AI 的典型错误：写成 `self.events.clone()`（复制整个 Vec！）
     ///    然后 buffer 里还留着一份，既浪费又不符合"交出去"的语义。
     pub fn take_all(&mut self) -> Vec<Event> {
-        todo!("L2 take_all：零拷贝地把内部 Vec 交出去（提示 std::mem::take）")
+        std::mem::take(&mut self.events)
     }
 }
 
