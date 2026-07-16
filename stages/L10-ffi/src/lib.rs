@@ -23,7 +23,13 @@ pub fn checksum(data: &[u8]) -> u8 {
 }
 
 /// 安全封装：把校验和描述成字符串。**立即拷贝**，不持有 C 指针。
+///
+/// C 侧的 `wm_describe` 用的是**非线程安全的静态缓冲**——两个线程并发调用会互相
+/// 覆写（数据竞争 UB）。安全封装必须替调用方扛下这个契约：用一把锁把调用串行化，
+/// 这样这个 safe fn 才配得上"怎么用都不会 UB"（L9 的标准）。
 pub fn describe(sum: u8) -> String {
+    static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _guard = LOCK.lock().unwrap();
     todo!("L10：调用 wm_describe，用 CStr 立即拷成 String（内存归库，不 free）")
 }
 

@@ -41,6 +41,8 @@ impl Reporter for TextReporter {
 
 impl Reporter for JsonReporter {
     fn render(&self, procs: &[&ProcessInfo]) -> String {
+        // 注:{:?} 的转义是 Rust 风格(非 ASCII 会输出 \u{...}),不是严格的 JSON 转义。
+        // 教学骨架取其简;生产请用 serde_json(结业加分项:替换并加一个非 ASCII 进程名测试)。
         let items: Vec<String> = procs
             .iter()
             .map(|p| format!(r#"{{"pid":{},"cpu":{},"name":{:?}}}"#, p.pid, p.cpu, p.name))

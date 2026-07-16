@@ -98,7 +98,7 @@ mod tests {
         ];
         let out = render_all(&reporters, &s);
         assert_eq!(out.len(), 3);
-        // stats 只读传入，调用后仍可用（没被 clone 走、没被 Rc 包）。
+        // stats 以 &Stats 只读传入——签名保证 reporter 拿不走它;此断言演示调用后仍可用。
         assert_eq!(s.total, 42);
     }
 }

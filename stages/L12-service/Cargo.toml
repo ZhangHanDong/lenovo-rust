@@ -3,5 +3,5 @@ name = "winmon-l12-service"
 version = "0.1.0"
 edition = "2021"
 
-# 真实服务注册 / toast 通知需要 windows crate（仅 Windows 目标，见 SOLUTION.md）。
+# 真实服务注册、IPC 与用户会话 companion/toast 需要 windows crate（仅 Windows 目标，见 SOLUTION.md）。
 # 本骨架的核心——typestate 状态机——是纯类型层面的，平台无关、完全可测。

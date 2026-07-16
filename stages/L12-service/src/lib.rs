@@ -6,7 +6,8 @@
 //!
 //! **非法转移（如在 Stopped 上 resume）应该编译不过**——用类型状态（typestate）
 //! 把状态编码进类型参数，非法转移的方法根本不存在。这是纯类型层面的设计，
-//! 平台无关、完全可测。真实的 `sc create` / toast 见 SOLUTION.md（Windows 上跑）。
+//! 平台无关、完全可测。真实的 `sc create` 与“服务 → IPC → 用户会话 companion
+//! → toast”架构见 SOLUTION.md（Windows 上跑）；Session 0 服务不能直接显示用户 UI。
 
 use std::marker::PhantomData;
 

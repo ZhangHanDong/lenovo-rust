@@ -42,6 +42,25 @@ pub async fn sample_all(ids: &[u32]) -> Vec<Event> {
     todo!("L7：让 N 个源并发采样（提示 futures::future::join_all）")
 }
 
+/// 周期采样服务（任务卡第二步的核心骨架）：
+/// 每个 `interval` 采一轮（N 个源**并发**采），事件发进 channel 汇聚给主循环；
+/// 收到 shutdown 信号后停止采集并退出（返回完成的轮数）。
+///
+/// 真实 main 里 shutdown 接 Ctrl-C（`tokio::signal::ctrl_c()`）；
+/// 测试里用 `watch::channel` 显式发信号——**优雅关闭必须是可测试的**。
+pub async fn run_sampler(
+    ids: Vec<u32>,
+    interval: Duration,
+    tx: tokio::sync::mpsc::Sender<Event>,
+    mut shutdown: tokio::sync::watch::Receiver<bool>,
+) -> usize {
+    let mut rounds = 0;
+    let mut ticker = tokio::time::interval(interval);
+    loop {
+        todo!("L7 用 select! 在 采样tick 和 shutdown 之间二选一，实现优雅关闭")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -59,6 +78,28 @@ mod tests {
             elapsed < Duration::from_millis(250),
             "应并发（≈100ms），实际 {elapsed:?} —— 像是串行了"
         );
+    }
+
+    #[tokio::test]
+    async fn sampler_shuts_down_gracefully() {
+        let (tx, mut rx) = tokio::sync::mpsc::channel(64);
+        let (stop_tx, stop_rx) = tokio::sync::watch::channel(false);
+        let h = tokio::spawn(run_sampler(
+            vec![1, 2, 3],
+            Duration::from_millis(20),
+            tx,
+            stop_rx,
+        ));
+        // 至少收到一轮事件（证明周期采样在跑）
+        let first = rx.recv().await.expect("应收到事件");
+        assert!(first.source_id >= 1);
+        // 发关闭信号 → 任务应在有限时间内退出（挂起 = 优雅关闭没做对）
+        stop_tx.send(true).unwrap();
+        let rounds = tokio::time::timeout(Duration::from_secs(2), h)
+            .await
+            .expect("shutdown 后 2s 内必须退出")
+            .unwrap();
+        assert!(rounds >= 1);
     }
 
     #[tokio::test]
