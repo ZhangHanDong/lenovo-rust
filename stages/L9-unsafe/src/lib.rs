@@ -72,6 +72,9 @@ impl<T> Ring<T> {
 impl<T> Drop for Ring<T> {
     fn drop(&mut self) {
         // 只 drop 已初始化的 len 个元素，uninit 槽不能碰。
+        // 保证边界：若某个元素的 Drop panic，其余元素不再被清理——
+        // 这不是 UB（不会二次析构），但可能泄漏资源。和 Vec 等标准容器
+        // 的差距在此（它们用 unwind guard 继续清理）；对本课骨架，明说边界即可。
         for i in 0..self.len {
             let idx = self.phys(i);
             // SAFETY: 0..len 的逻辑元素都已初始化，每个恰好 drop 一次。
@@ -85,6 +88,31 @@ mod tests {
     use super::*;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Arc;
+
+    #[test]
+    #[should_panic(expected = "容量必须为正")]
+    fn zero_capacity_rejected() {
+        let _ = Ring::<u32>::with_capacity(0);
+    }
+
+    #[test]
+    fn empty_ring_get_none() {
+        let r = Ring::<u32>::with_capacity(3);
+        assert!(r.is_empty());
+        assert_eq!(r.get(0), None);
+    }
+
+    #[test]
+    fn zst_elements_work() {
+        // 零大小类型:所有槽同地址,初始化记账全靠 head/len——最容易翻车的边角
+        let mut r = Ring::with_capacity(2);
+        for _ in 0..5 {
+            r.push(());
+        }
+        assert_eq!(r.len(), 2);
+        assert_eq!(r.get(0), Some(&()));
+        assert_eq!(r.get(2), None);
+    }
 
     #[test]
     fn push_and_get_in_order() {
