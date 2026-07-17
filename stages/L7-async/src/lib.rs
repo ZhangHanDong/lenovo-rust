@@ -57,6 +57,10 @@ pub async fn run_sampler(
     let mut rounds = 0;
     let mut ticker = tokio::time::interval(interval);
     loop {
+        // watch 只在"值变化"时唤醒——如果启动时就已经是 true,changed() 永远等不到
+        if *shutdown.borrow() {
+            return rounds;
+        }
         todo!("L7 用 select! 在 采样tick 和 shutdown 之间二选一，实现优雅关闭")
     }
 }
@@ -100,6 +104,15 @@ mod tests {
             .expect("shutdown 后 2s 内必须退出")
             .unwrap();
         assert!(rounds >= 1);
+    }
+
+    #[tokio::test]
+    async fn sampler_respects_preexisting_shutdown() {
+        // 启动时 shutdown 已经是 true——不该采任何一轮
+        let (tx, _rx) = tokio::sync::mpsc::channel(4);
+        let (_stop_tx, stop_rx) = tokio::sync::watch::channel(true);
+        let rounds = run_sampler(vec![1], Duration::from_millis(10), tx, stop_rx).await;
+        assert_eq!(rounds, 0, "启动前已要求关闭,不应采样");
     }
 
     #[tokio::test]

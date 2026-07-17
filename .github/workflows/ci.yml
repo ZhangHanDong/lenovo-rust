@@ -1,7 +1,8 @@
 name: 质量门禁
 
 # main 是起点骨架（含 todo!()），只验证「格式正确 + 能编译」；
-# 完整门禁（clippy 零告警 + 全量测试）在学员作业 PR 上跑——补全后应全绿。
+# 学员作业 PR 只对 [hwNN] 对应的那一个 package 跑完整门禁——
+# 其他课仍是挖空状态（todo!/未用导入/红测试），全 workspace 门禁永远过不了。
 on:
   push:
     branches: [main]
@@ -38,15 +39,35 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
-      - name: 格式检查
+      - name: 解析课次 → package
+        id: hw
+        shell: bash
+        run: |
+          nn=$(printf '%s' "$PR_TITLE" | grep -oE '^\[hw[0-9]{2}\]' | grep -oE '[0-9]{2}') || true
+          case "$nn" in
+            01) pkg=winmon-l1-memory ;;    02) pkg=winmon-l2-ownership ;;
+            03) pkg=winmon-l3-borrow ;;    04) pkg=winmon-l4-model ;;
+            05) pkg=winmon-l5-report ;;    06) pkg=winmon-l6-collect ;;
+            07) pkg=winmon-l7-async ;;     08) pkg=winmon-l8-robust ;;
+            09) pkg=winmon-l9-unsafe ;;    10) pkg=winmon-l10-ffi ;;
+            11) pkg=winmon-l11-win32 ;;    12) pkg=winmon-l12-service ;;
+            13) pkg=winmon-l13-package ;;  14) pkg=winmon-l14-arch ;;
+            15) pkg=winmon ;;
+            *) echo "::error::PR 标题必须以 [hwNN] 开头(NN=01..15),当前: $PR_TITLE"; exit 1 ;;
+          esac
+          echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
+          echo "本次门禁 package: $pkg"
+      - name: 格式检查(全仓)
         run: cargo fmt --all --check
-      - name: Clippy 零告警
-        run: cargo clippy --workspace --all-targets -- -D warnings
-      - name: 全量测试
-        run: cargo test --workspace
+      - name: Clippy 零告警(本课)
+        run: cargo clippy -p ${{ steps.hw.outputs.pkg }} --all-targets -- -D warnings
+      - name: 测试全绿(本课)
+        run: cargo test -p ${{ steps.hw.outputs.pkg }}

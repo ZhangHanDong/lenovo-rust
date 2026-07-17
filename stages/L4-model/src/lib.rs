@@ -26,9 +26,21 @@ pub enum Resource {
 /// 每个变体只带它需要的数据——没有一个字段是"有时有效"的。
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
-    ProcessStarted { pid: ProcessId, name: String },
-    ProcessExited { pid: ProcessId, code: ExitCode },
-    ResourceAlert { resource: Resource, percent: u8 },
+    ProcessStarted {
+        pid: ProcessId,
+        name: String,
+    },
+    ProcessExited {
+        pid: ProcessId,
+        code: ExitCode,
+    },
+    /// `percent` 用裸 `u8`——101–255 仍可构造，是本课**有意留下的残留非法状态**：
+    /// 任务卡的"零非法状态"针对变体结构（心跳带 pid 之类）；
+    /// 把 `percent` 收紧成带校验的 newtype（`Percent::new(x) -> Option<Percent>`）是作业加分项。
+    ResourceAlert {
+        resource: Resource,
+        percent: u8,
+    },
     Heartbeat,
 }
 

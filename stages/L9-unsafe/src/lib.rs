@@ -53,9 +53,14 @@ impl<T> Ring<T> {
         (oldest + i) % cap
     }
 
-    /// 追加一个元素。满了就**覆盖最老的**（先把它 drop 掉，避免泄漏）。
+    /// 追加一个元素。满了就**覆盖最老的**。
+    ///
+    /// ⚠️ **panic 安全**是这里的隐藏考点：如果先 `assume_init_drop()` 旧值、
+    /// 且它的 `Drop` panic，槽位在账面上仍是"已初始化"——展开时 `Ring::drop`
+    /// 会**二次析构**同一个值（UB）。正解：先把旧值**移出来**、写入新值、
+    /// 恢复全部不变量，**最后**才 drop 旧值。
     pub fn push(&mut self, value: T) {
-        todo!("L9：写入 head 槽；满时先 drop 被覆盖的最老元素；维护 head/len 不变量")
+        todo!("L9：满时先 assume_init_read 移出旧值，写入新值恢复不变量后再 drop（panic 安全）")
     }
 
     /// 读逻辑第 `i` 老的元素（0 = 最老）。越界返回 `None`。
@@ -103,6 +108,30 @@ mod tests {
         assert_eq!(r.get(0), Some(&3));
         assert_eq!(r.get(1), Some(&4));
         assert_eq!(r.get(2), Some(&5));
+    }
+
+    /// 被覆盖元素的 Drop panic 时，不能发生二次析构（panic 安全）。
+    /// 修复前的写法（先 assume_init_drop 再写入）在这里是 UB——miri 会抓到二次 drop。
+    #[test]
+    fn overwrite_survives_panicking_drop() {
+        static DROPS: AtomicUsize = AtomicUsize::new(0);
+        struct Bomb(bool); // true = drop 时 panic
+        impl Drop for Bomb {
+            fn drop(&mut self) {
+                DROPS.fetch_add(1, Ordering::SeqCst);
+                if self.0 {
+                    panic!("drop 炸了");
+                }
+            }
+        }
+        let result = std::panic::catch_unwind(|| {
+            let mut r = Ring::with_capacity(1);
+            r.push(Bomb(true));
+            r.push(Bomb(false)); // 覆盖旧值 → 旧值的 Drop panic
+        });
+        assert!(result.is_err(), "panic 应被 catch_unwind 捕获");
+        // Bomb(true) 恰好 drop 一次；Bomb(false) 在展开时随 Ring 析构 drop 一次。
+        assert_eq!(DROPS.load(Ordering::SeqCst), 2, "每个元素恰好 drop 一次");
     }
 
     /// 关键：被覆盖的元素、以及析构时的剩余元素，都必须 drop 恰好一次。
