@@ -18,4 +18,5 @@ members = [
     "stages/L13-package",
     "stages/L14-arch",
     "stages/L15-capstone",
+    "stages/L5X-listlab",
 ]

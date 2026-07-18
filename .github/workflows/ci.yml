@@ -51,7 +51,7 @@ jobs:
         id: hw
         shell: bash
         run: |
-          nn=$(printf '%s' "$PR_TITLE" | grep -oE '^\[hw[0-9]{2}\]' | grep -oE '[0-9]{2}') || true
+          nn=$(printf '%s' "$PR_TITLE" | grep -oE '^\[hw[0-9x]{2}\]' | grep -oE '[0-9x]{2}') || true
           case "$nn" in
             01) pkg=winmon-l1-memory ;;    02) pkg=winmon-l2-ownership ;;
             03) pkg=winmon-l3-borrow ;;    04) pkg=winmon-l4-model ;;
@@ -61,7 +61,8 @@ jobs:
             11) pkg=winmon-l11-win32 ;;    12) pkg=winmon-l12-service ;;
             13) pkg=winmon-l13-package ;;  14) pkg=winmon-l14-arch ;;
             15) pkg=winmon ;;
-            *) echo "::error::PR 标题必须以 [hwNN] 开头(NN=01..15),当前: $PR_TITLE"; exit 1 ;;
+            5x) pkg=winmon-listlab ;;   # L5+ 加练
+            *) echo "::error::PR 标题必须以 [hwNN] 开头(NN=01..15 或加练 5x),当前: $PR_TITLE"; exit 1 ;;
           esac
           echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
           echo "本次门禁 package: $pkg"

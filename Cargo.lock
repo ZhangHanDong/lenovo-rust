@@ -282,3 +282,7 @@ dependencies = [
 [[package]]
 name = "winmon-l9-unsafe"
 version = "0.1.0"
+
+[[package]]
+name = "winmon-listlab"
+version = "0.1.0"
