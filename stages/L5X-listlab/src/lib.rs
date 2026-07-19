@@ -81,6 +81,50 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
+// ── 三种迭代器补全:所有权的全谱系(L2/L3 三种传参在迭代器上的重演) ──
+
+/// 消耗式迭代器:拿走整个 History(self),吐出拥有所有权的 T。
+pub struct IntoIter<T>(History<T>);
+
+impl<T> History<T> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
+        IterMut {
+            next: self.head.as_deref_mut(),
+        }
+    }
+}
+
+/// 实现标准 trait 而非固有方法——白赚 `for ev in history` 语法。
+impl<T> IntoIterator for History<T> {
+    type Item = T;
+    type IntoIter = IntoIter<T>;
+    fn into_iter(self) -> IntoIter<T> {
+        IntoIter(self)
+    }
+}
+
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<T> {
+        todo!("L5X IntoIter:一行——复用你已写好的 pop")
+    }
+}
+
+/// 可变迭代器——too-many-lists 称之为安全 Rust 的智力巅峰之一。
+/// 难点:`&mut` 是独占的、不可复制——共享版 Iter 里 `self.next.map(...)` 能过
+/// (因为 `&T` 可复制),这里同样写法是 E0500(闭包要独占 self.next,它却还被借着)。
+/// 钥匙:`take`——把 `&mut Node` 整个从 self 里拿出来,用完把下一环放回去。
+pub struct IterMut<'a, T> {
+    next: Option<&'a mut Node<T>>,
+}
+
+impl<'a, T> Iterator for IterMut<'a, T> {
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<&'a mut T> {
+        todo!("L5X IterMut:take 出 mut 引用,推进到 node.next.as_deref_mut,交出 mut elem")
+    }
+}
+
 /// 隐藏关卡:不写这个 impl 也能编译——但默认析构是递归的,
 /// 20 万节点的链会在 drop 时爆栈。把递归拍平成循环。
 impl<T> Drop for History<T> {
@@ -183,6 +227,35 @@ mod tests {
             h.push(i);
         }
         drop(h); // 递归 Drop 会在这里栈溢出
+    }
+
+    #[test]
+    fn into_iter_consumes() {
+        let mut h = History::new();
+        h.push(1);
+        h.push(2);
+        h.push(3);
+        let v: Vec<i32> = h.into_iter().collect(); // h 被吃掉,元素所有权交出
+        assert_eq!(v, vec![3, 2, 1]);
+        let mut h2 = History::new();
+        h2.push(String::from("owned"));
+        for s in h2 {
+            // 实现了 IntoIterator → for 直接吃 History,拿到的是 String 本体
+            let _owned: String = s;
+        }
+    }
+
+    #[test]
+    fn iter_mut_edits_in_place() {
+        let mut h = History::new();
+        h.push(1);
+        h.push(2);
+        h.push(3);
+        for x in h.iter_mut() {
+            *x *= 10; // 原地改,零拷贝
+        }
+        let v: Vec<&i32> = h.iter().collect();
+        assert_eq!(v, vec![&30, &20, &10]);
     }
 
     #[test]

@@ -7,7 +7,7 @@
 
 实现两个数据结构(全程**零 unsafe、零 unwrap(测试除外)、零深拷贝 clone**):
 
-1. `History<T>`(Box 单链表,undo 栈):补全 `push` / `pop` / `peek` / `Iter::next` / 迭代式 `Drop` 五处 `todo!()`;
+1. `History<T>`(Box 单链表,undo 栈):补全 `push` / `pop` / `peek` / `Iter::next` / `IntoIter::next` / **`IterMut::next`(智力巅峰)** / 迭代式 `Drop` 七处 `todo!()`;
 2. `Shared<T>`(Rc 持久化链表,历史分叉):补全 `prepend`。
 
 ## 协作方式
@@ -18,11 +18,12 @@
 
 ## 验收标准
 
-- `cargo test -p winmon-listlab` **5 个测试全绿**——特别注意 `long_chain_drop_no_overflow`(20 万节点):AI 忘写迭代式 Drop 时它会爆栈,而其余 4 个照样绿;
-- **PR 三问**(D8 评分项):AI 在哪里用 clone 绕所有权移交?它的 Drop 能过长链测试吗?`prepend` 它写的是 `&self` 还是 `&mut self`?
+- `cargo test -p winmon-listlab` **7 个测试全绿**——特别注意 `long_chain_drop_no_overflow`(20 万节点):AI 忘写迭代式 Drop 时它会爆栈,而其余 4 个照样绿;
+- **PR 三问**(D8 评分项):AI 在哪里用 clone 绕所有权移交?它的 `IterMut` 是 take 接力还是 E0500/clone?它的 Drop 能过长链测试吗?
 
 ## 提示
 
 - 撞 E0507 时想想 `Option::take`(先补位再拿);
 - `Iter<'a, T>` 是临时视图结构体,`'a` 约束它不能活得比 `History` 久(L3+ §1.4);
-- `Rc::clone` 是计数 +1 不是深拷贝——它不违反零拷贝红线,而且是 `prepend` 的正解。
+- `Rc::clone` 是计数 +1 不是深拷贝——它不违反零拷贝红线,而且是 `prepend` 的正解;
+- `IterMut` 撞 E0500 时想想:`&T` 可复制、`&mut` 独占——钥匙还是 `take`(接力棒,教材图 47)。
