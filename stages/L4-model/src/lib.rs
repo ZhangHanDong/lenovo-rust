@@ -49,19 +49,50 @@ pub enum Event {
 /// `match` 不写 `_`：将来给 `Event` 加一个新变体时，这里会**编译失败**
 /// （E0004 non-exhaustive），逼你处理新情况——把"演化提醒"变成编译期资产。
 ///
-/// 试试给 `Event` 加一个 `Event::Renamed { .. }`，然后 `cargo build`：
+/// 下面的编译失败测试模拟给 `Event` 增加 `Renamed` 变体，却遗漏更新
+/// 原有的穷尽式 `match`。`cargo test --doc` 会确认编译器报出 E0004：
 ///
-/// ```compile_fail
-/// enum E { A, B }
-/// fn f(e: &E) -> u8 {
-///     match e {
-///         E::A => 1,
-///         // 漏了 E::B，又没写 `_` —— E0004，编译失败
+/// ```compile_fail,E0004
+/// enum Event {
+///     ProcessStarted,
+///     ProcessExited,
+///     ResourceAlert,
+///     Heartbeat,
+///     Renamed,
+/// }
+///
+/// fn describe(event: &Event) -> &'static str {
+///     // 这是新增 Renamed 前的 match；没有 `_`，所以演化遗漏会编译失败。
+///     match event {
+///         Event::ProcessStarted => "进程启动",
+///         Event::ProcessExited => "进程退出",
+///         Event::ResourceAlert => "资源告警",
+///         Event::Heartbeat => "心跳",
 ///     }
+/// }
+///
+/// fn main() {
+///     describe(&Event::Renamed);
 /// }
 /// ```
 pub fn describe(e: &Event) -> String {
-    todo!("L4：对每个变体给一句描述，match 不写 `_` 兜底")
+    match e {
+        Event::ProcessStarted { pid, name } => {
+            format!("进程启动：PID {}，名称 {name}", pid.0)
+        }
+        Event::ProcessExited { pid, code } => {
+            format!("进程退出：PID {}，退出码 {}", pid.0, code.0)
+        }
+        Event::ResourceAlert {
+            resource: Resource::Cpu,
+            percent,
+        } => format!("CPU 资源告警：{percent}%"),
+        Event::ResourceAlert {
+            resource: Resource::Memory,
+            percent,
+        } => format!("内存资源告警：{percent}%"),
+        Event::Heartbeat => "心跳".to_owned(),
+    }
 }
 
 // ───────────────── AI 的典型坏建模（对照用，别学它）─────────────────
