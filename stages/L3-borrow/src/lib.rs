@@ -66,7 +66,7 @@ pub mod clean {
     /// 只有 `events` 一个输入引用，返回值的生命周期由 elision 规则自动绑到它，
     /// 不用写 `'a`（对比下面 `messages_containing`）。
     pub fn filter_by_pid(events: &[Event], pid: u32) -> Vec<&Event> {
-        todo!("L3：借用 events，返回匹配 pid 的事件引用（不 clone）")
+        events.iter().filter(|e| e.pid == pid).collect()
     }
 
     /// 返回消息的**字符串切片**引用，不复制字符串内容。
@@ -74,12 +74,16 @@ pub mod clean {
     /// 这里有 `events` 和 `needle` **两个**输入引用，编译器无法自动判断返回值
     /// 借的是哪个——所以**必须显式**用 `'a` 把返回值绑到 `events`。
     pub fn messages_containing<'a>(events: &'a [Event], needle: &str) -> Vec<&'a str> {
-        todo!("L3：借用 events，返回包含 needle 的消息切片（不 clone）")
+        events
+            .iter()
+            .filter(|e| e.message.contains(needle))
+            .map(|e| e.message.as_str())
+            .collect()
     }
 
     /// 数个数：只读借用就够，不必拿走所有权。
     pub fn count_by_pid(events: &[Event], pid: u32) -> usize {
-        todo!("L3：借用 events，数出 pid 匹配的个数")
+        events.iter().filter(|e| e.pid == pid).count()
     }
 }
 
